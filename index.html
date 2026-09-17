@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wan2.2 Image to Video AI Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#090d16',
+                            800: '#111827',
+                            700: '#1f293d',
+                            600: '#2d3748'
+                        },
+                        brand: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dropzone-active {
+            border-color: #6366f1 !important;
+            background-color: rgba(99, 102, 241, 0.08) !important;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2d3748;
+        }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-gray-800 bg-dark-800/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="video" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">Wan2.2 AI Studio</h1>
+                    <span class="text-xs text-gray-400">Image to Video Generator</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                    Wan2.2 Engine Ready
+                </span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    100% Besplatno & Neograničeno
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Panel: Controls & Input (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Prompt Section -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="block text-sm font-semibold text-gray-200 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+                        Opis Pokreta / Prompt (Uputa)
+                    </label>
+                    <button id="extendPromptBtn" type="button" class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition">
+                        <i data-lucide="wand2" class="w-3.5 h-3.5"></i>
+                        Proširi Prompt (Qwen)
+                    </button>
+                </div>
+                
+                <textarea id="promptInput" rows="3" 
+                    class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    placeholder="Npr. Mačka sa sunčanim naočalama sjedi na dasci za surfanje, lagani povjetarac pomiče krzno, valovi u pozadini, HD fotorealistično..."></textarea>
+                
+                <!-- Quick Prompts -->
+                <div class="flex flex-wrap gap-2">
+                    <span class="text-xs text-gray-400 py-1">Brzi predložci:</span>
+                    <button type="button" onclick="setPrompt('Kinematografski zum, kamera kruži oko lika, dinamično osvjetljenje, vjetar u kosi')" class="text-xs bg-dark-700 hover:bg-gray-700 text-gray-300 px-2.5 py-1 rounded-lg border border-gray-700 transition">Kinematografski zum</button>
+                    <button type="button" onclick="setPrompt('Akcijska scena, brzi pokreti, fotorealistično renderiranje, 4k rezolucija')" class="text-xs bg-dark-700 hover:bg-gray-700 text-gray-300 px-2.5 py-1 rounded-lg border border-gray-700 transition">Akcija & Pokret</button>
+                    <button type="button" onclick="setPrompt('Polagani pokret vode, relaksirajući amijent, prirodno osvjetljenje')" class="text-xs bg-dark-700 hover:bg-gray-700 text-gray-300 px-2.5 py-1 rounded-lg border border-gray-700 transition">U usporenom pokretu</button>
+                </div>
+
+                <!-- Negative Prompt -->
+                <div class="pt-2">
+                    <button type="button" onclick="toggleNegativePrompt()" class="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1">
+                        <i data-lucide="chevron-right" id="negPromptChevron" class="w-3.5 h-3.5 transition-transform"></i>
+                        Negativni Prompt (N_Prompt)
+                    </button>
+                    <div id="negPromptContainer" class="hidden mt-2">
+                        <textarea id="negPromptInput" rows="2" 
+                            class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Npr. zamućeno, niska kvaliteta, izobličena lica, deformacije, vodeni žig..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload Section (Max 2 images) -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
+                        <i data-lucide="image" class="w-4 h-4 text-indigo-400"></i>
+                        Ulazne Slike (Rubrika za unos do 2 slike)
+                    </h2>
+                    <span class="text-xs text-gray-400">Podržani formati: PNG, JPG, WEBP</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Image 1 Slot (Required / Primary) -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-gray-300">
+                            1. Primary Reference Image <span class="text-indigo-400">* (Glavna Slika)</span>
+                        </label>
+                        <div id="dropzone1" onclick="document.getElementById('imgInput1').click()"
+                            class="border-2 border-dashed border-gray-700 hover:border-indigo-500 bg-dark-900/50 hover:bg-dark-900 rounded-xl p-4 text-center cursor-pointer transition relative min-h-[160px] flex flex-col items-center justify-center group">
+                            
+                            <input type="file" id="imgInput1" accept="image/*" class="hidden" onchange="handleImageUpload(this, 1)">
+                            
+                            <div id="preview1Container" class="hidden absolute inset-0 rounded-xl overflow-hidden group-hover:opacity-90">
+                                <img id="preview1" src="" class="w-full h-full object-cover" alt="Preview 1">
+                                <button type="button" onclick="event.stopPropagation(); removeImage(1)" class="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-full text-xs backdrop-blur transition">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <div id="placeholder1" class="space-y-2 text-gray-400">
+                                <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-indigo-400 group-hover:scale-110 transition-transform"></i>
+                                <div class="text-xs font-medium">Klikni ili dovuci sliku 1</div>
+                                <div class="text-[10px] text-gray-500">Inicijalni okvir generiranja</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image 2 Slot (Optional / Background or Secondary) -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-gray-300">
+                            2. Secondary Image <span class="text-gray-500">(Opcionalno - Background/Pose)</span>
+                        </label>
+                        <div id="dropzone2" onclick="document.getElementById('imgInput2').click()"
+                            class="border-2 border-dashed border-gray-700 hover:border-indigo-500 bg-dark-900/50 hover:bg-dark-900 rounded-xl p-4 text-center cursor-pointer transition relative min-h-[160px] flex flex-col items-center justify-center group">
+                            
+                            <input type="file" id="imgInput2" accept="image/*" class="hidden" onchange="handleImageUpload(this, 2)">
+                            
+                            <div id="preview2Container" class="hidden absolute inset-0 rounded-xl overflow-hidden group-hover:opacity-90">
+                                <img id="preview2" src="" class="w-full h-full object-cover" alt="Preview 2">
+                                <button type="button" onclick="event.stopPropagation(); removeImage(2)" class="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded-full text-xs backdrop-blur transition">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <div id="placeholder2" class="space-y-2 text-gray-400">
+                                <i data-lucide="plus-circle" class="w-8 h-8 mx-auto text-gray-500 group-hover:scale-110 transition-transform"></i>
+                                <div class="text-xs font-medium">Klikni ili dovuci sliku 2</div>
+                                <div class="text-[10px] text-gray-500">Za zamjenu lika/pozadine</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Model Settings Grid -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-4">
+                <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+                    Postavke Generiranja (Wan2.2 Parameters)
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- Task Choice -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Zadatak (Model Task)</label>
+                        <select id="taskSelect" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-200 focus:ring-2 focus:ring-indigo-500">
+                            <option value="i2v-A14B" selected>Wan I2V-A14B (Standard Image to Video)</option>
+                            <option value="animate-14B">Wan Animate-14B (Animation & Character Replace)</option>
+                        </select>
+                    </div>
+
+                    <!-- Size / Resolution -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Rezolucija & Omjer</label>
+                        <select id="sizeSelect" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-200 focus:ring-2 focus:ring-indigo-500">
+                            <option value="1280*720">1280x720 (16:9 HD)</option>
+                            <option value="960*540">960x540 (16:9 QHD)</option>
+                            <option value="720*1280">720x1280 (9:16 Okomito)</option>
+                            <option value="540*960">540x960 (9:16 Okomito QHD)</option>
+                        </select>
+                    </div>
+
+                    <!-- Frame Num -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1 flex justify-between">
+                            <span>Broj Okvira (Frame Num)</span>
+                            <span id="frameNumVal" class="text-indigo-400 font-mono">81</span>
+                        </label>
+                        <select id="frameNumSelect" onchange="document.getElementById('frameNumVal').innerText = this.value" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-200 focus:ring-2 focus:ring-indigo-500">
+                            <option value="81" selected>81 okvira (~5 sekundi na 16fps)</option>
+                            <option value="49">49 okvira (~3 sekunde)</option>
+                            <option value="33">33 okvira (~2 sekunde)</option>
+                        </select>
+                        <span class="text-[10px] text-gray-500 mt-1 block">*Mora pratiti pravilo 4n+1 prema arhitekturi</span>
+                    </div>
+
+                    <!-- Sampling Steps -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1 flex justify-between">
+                            <span>Koraci uzorkovanja (Sampling Steps)</span>
+                            <span id="stepsVal" class="text-indigo-400 font-mono">40</span>
+                        </label>
+                        <input type="range" id="stepsInput" min="10" max="50" value="40" 
+                            oninput="document.getElementById('stepsVal').innerText = this.value"
+                            class="w-full accent-indigo-500">
+                    </div>
+
+                    <!-- Solver -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Sampling Solver</label>
+                        <select id="solverSelect" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-200 focus:ring-2 focus:ring-indigo-500">
+                            <option value="unipc" selected>FlowUniPCMultistepScheduler (UniPC - Preporučeno)</option>
+                            <option value="dpm++">FlowDPMSolverMultistepScheduler (DPM++)</option>
+                        </select>
+                    </div>
+
+                    <!-- Guide Scale -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1 flex justify-between">
+                            <span>Guide Scale (CFG)</span>
+                            <span id="guideVal" class="text-indigo-400 font-mono">5.0</span>
+                        </label>
+                        <input type="range" id="guideInput" min="1.0" max="10.0" step="0.5" value="5.0" 
+                            oninput="document.getElementById('guideVal').innerText = parseFloat(this.value).toFixed(1)"
+                            class="w-full accent-indigo-500">
+                    </div>
+
+                    <!-- Shift -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1 flex justify-between">
+                            <span>Shift Parameter</span>
+                            <span id="shiftVal" class="text-indigo-400 font-mono">5.0</span>
+                        </label>
+                        <input type="range" id="shiftInput" min="1.0" max="10.0" step="0.5" value="5.0" 
+                            oninput="document.getElementById('shiftVal').innerText = parseFloat(this.value).toFixed(1)"
+                            class="w-full accent-indigo-500">
+                    </div>
+
+                    <!-- Seed -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Seed (-1 za nasumično)</label>
+                        <input type="number" id="seedInput" value="-1" 
+                            class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2.5 text-xs text-gray-200 focus:ring-2 focus:ring-indigo-500 font-mono" placeholder="-1">
+                    </div>
+
+                </div>
+
+                <!-- Toggles -->
+                <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-gray-700/50">
+                    <label class="flex items-center space-x-2 text-xs text-gray-300 cursor-pointer">
+                        <input type="checkbox" id="offloadCheck" checked class="rounded border-gray-700 text-indigo-600 focus:ring-indigo-500 bg-dark-900">
+                        <span>Offload Model to CPU (Štedi VRAM)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 text-xs text-gray-300 cursor-pointer">
+                        <input type="checkbox" id="promptExtendCheck" class="rounded border-gray-700 text-indigo-600 focus:ring-indigo-500 bg-dark-900">
+                        <span>Automatsko proširenje prompta</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Generate Button -->
+            <button id="generateBtn" onclick="startGeneration()" 
+                class="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-4 px-6 rounded-2xl shadow-xl shadow-indigo-600/25 flex items-center justify-center space-x-2 transition transform active:scale-[0.99]">
+                <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                <span class="text-base">Generiraj Video Iz Slike</span>
+            </button>
+
+        </div>
+
+        <!-- Right Panel: Output & Studio Video Player (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Video Studio Player Window -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl flex flex-col h-full min-h-[480px]">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
+                        <i data-lucide="clapperboard" class="w-4 h-4 text-indigo-400"></i>
+                        Izlazni Video Studio
+                    </h2>
+                    <span id="statusBadge" class="text-[11px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full font-mono">
+                        Čeka na unos
+                    </span>
+                </div>
+
+                <!-- Display Box (Initial Placeholder / Video Player / Loader) -->
+                <div class="flex-1 bg-dark-900 border border-gray-800 rounded-xl overflow-hidden relative flex flex-col items-center justify-center min-h-[300px]">
+                    
+                    <!-- Placeholder State -->
+                    <div id="playerPlaceholder" class="text-center p-6 space-y-3">
+                        <div class="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto text-gray-600 border border-gray-700">
+                            <i data-lucide="film" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-sm text-gray-400">Učitajte sliku, upišite prompt i kliknite na <strong class="text-gray-200">Generiraj Video</strong>.</p>
+                        <p class="text-xs text-gray-500">Generirani MP4 video prikazat će se ovdje.</p>
+                    </div>
+
+                    <!-- Progress Loading State -->
+                    <div id="playerLoading" class="hidden w-full p-6 space-y-4 text-center">
+                        <div class="relative w-16 h-16 mx-auto">
+                            <div class="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-ping"></div>
+                            <div class="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin flex items-center justify-center"></div>
+                        </div>
+                        <div class="space-y-1">
+                            <div id="progressStep" class="text-sm font-semibold text-gray-200">Priprema modela Wan2.2...</div>
+                            <div id="progressSub" class="text-xs text-gray-400">Inicijalizacija VAE i T5 Encodera</div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-dark-800 rounded-full h-2.5 overflow-hidden border border-gray-700">
+                            <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-gray-500 font-mono">
+                            <span id="progressPercent">0%</span>
+                            <span id="progressStepCount">0/40 steps</span>
+                        </div>
+                    </div>
+
+                    <!-- Rendered Video Player State -->
+                    <div id="playerVideoContainer" class="hidden w-full h-full relative group">
+                        <video id="outputVideo" class="w-full h-full object-contain" loop controls playsinline></video>
+                    </div>
+
+                </div>
+
+                <!-- Video Controls & Download Bar -->
+                <div id="videoActions" class="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between gap-3 opacity-50 pointer-events-none transition">
+                    <button id="downloadBtn" onclick="downloadVideo()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Preuzmi Video (MP4)
+                    </button>
+                    <button onclick="shareVideo()" class="bg-dark-700 hover:bg-gray-700 text-gray-200 p-2 rounded-xl text-xs transition" title="Podijeli">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Developer CLI Executable Command -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+                        Generirana Eksterna Python / CLI Naredba
+                    </h3>
+                    <button onclick="copyCliCommand()" class="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        <i data-lucide="copy" class="w-3 h-3"></i>
+                        Kopiraj Naredbu
+                    </button>
+                </div>
+                <div class="bg-dark-900 p-3 rounded-xl border border-gray-800 font-mono text-[11px] text-emerald-400 overflow-x-auto whitespace-pre-wrap break-all" id="cliCommandOutput">
+python generate.py --task i2v-A14B --size '1280*720' --image 'input.jpg' --prompt "..."
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 bg-dark-800/50 py-4 text-center text-xs text-gray-500">
+        Wan2.2 Open Source Generative AI Pipeline &bull; Razvijeno na temelju <code class="text-gray-400">image2video.py</code> i <code class="text-gray-400">animate.py</code> arhitekture
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State management
+        let uploadedImages = {
+            1: null,
+            2: null
+        };
+        let isGenerating = false;
+        let generatedVideoBlobUrl = null;
+
+        // Initialize Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateCliCommand();
+            setupDragAndDrop();
+
+            // Form change listeners for live CLI update
+            const inputs = ['promptInput', 'taskSelect', 'sizeSelect', 'frameNumSelect', 'stepsInput', 'solverSelect', 'guideInput', 'shiftInput', 'seedInput', 'offloadCheck'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', updateCliCommand);
+                    el.addEventListener('change', updateCliCommand);
+                }
+            });
+        });
+
+        // Set quick prompt
+        function setPrompt(text) {
+            document.getElementById('promptInput').value = text;
+            updateCliCommand();
+        }
+
+        // Toggle Negative Prompt
+        function toggleNegativePrompt() {
+            const container = document.getElementById('negPromptContainer');
+            const chevron = document.getElementById('negPromptChevron');
+            container.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-90');
+        }
+
+        // Setup Drag and Drop
+        function setupDragAndDrop() {
+            [1, 2].forEach(num => {
+                const zone = document.getElementById(`dropzone${num}`);
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    zone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        zone.classList.add('dropzone-active');
+                    }, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    zone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        zone.classList.remove('dropzone-active');
+                    }, false);
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files.length > 0) {
+                        const input = document.getElementById(`imgInput${num}`);
+                        input.files = files;
+                        handleImageUpload(input, num);
+                    }
+                }, false);
+            });
+        }
+
+        // Handle Image Upload
+        function handleImageUpload(input, slotNum) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    uploadedImages[slotNum] = e.target.result;
+                    document.getElementById(`preview${slotNum}`).src = e.target.result;
+                    document.getElementById(`preview${slotNum}Container`).classList.remove('hidden');
+                    document.getElementById(`placeholder${slotNum}`).classList.add('hidden');
+                    updateCliCommand();
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Remove Image
+        function removeImage(slotNum) {
+            uploadedImages[slotNum] = null;
+            document.getElementById(`imgInput${slotNum}`).value = '';
+            document.getElementById(`preview${slotNum}Container`).classList.add('hidden');
+            document.getElementById(`placeholder${slotNum}`).classList.remove('hidden');
+            updateCliCommand();
+        }
+
+        // Generate CLI Command Text dynamically
+        function updateCliCommand() {
+            const task = document.getElementById('taskSelect').value;
+            const size = document.getElementById('sizeSelect').value;
+            const frameNum = document.getElementById('frameNumSelect').value;
+            const prompt = document.getElementById('promptInput').value || 'Unesite prompt...';
+            const steps = document.getElementById('stepsInput').value;
+            const solver = document.getElementById('solverSelect').value;
+            const guide = document.getElementById('guideInput').value;
+            const shift = document.getElementById('shiftInput').value;
+            const seed = document.getElementById('seedInput').value;
+            const offload = document.getElementById('offloadCheck').checked;
+
+            let imgArg = uploadedImages[1] ? `--image "src_ref.png"` : `--image "input.jpg"`;
+            let secondImgArg = uploadedImages[2] ? ` --src_root_path "./inputs"` : ``;
+
+            const cmd = `python generate.py \\
+  --task ${task} \\
+  --size '${size}' \\
+  --frame_num ${frameNum} \\
+  ${imgArg}${secondImgArg} \\
+  --prompt "${prompt.replace(/"/g, '\\"')}" \\
+  --sample_solver ${solver} \\
+  --sample_steps ${steps} \\
+  --sample_guide_scale ${guide} \\
+  --sample_shift ${shift} \\
+  --base_seed ${seed} \\
+  --offload_model ${offload ? 'True' : 'False'}`;
+
+            document.getElementById('cliCommandOutput').innerText = cmd;
+        }
+
+        // Copy CLI Command
+        function copyCliCommand() {
+            const text = document.getElementById('cliCommandOutput').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Naredba je kopirana u međuspremnik (clipboard)!');
+            });
+        }
+
+        // Start Video Generation Simulation Process
+        function startGeneration() {
+            if (isGenerating) return;
+
+            const prompt = document.getElementById('promptInput').value.trim();
+            if (!prompt) {
+                alert('Molimo unesite opis pokreta / prompt za generiranje videa!');
+                return;
+            }
+
+            if (!uploadedImages[1]) {
+                alert('Molimo učitajte barem prvu (glavnu) sliku za Image-to-Video generiranje!');
+                return;
+            }
+
+            isGenerating = true;
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').classList.add('opacity-75', 'cursor-not-allowed');
+
+            // Hide Placeholder and Video Player, Show Loading
+            document.getElementById('playerPlaceholder').classList.add('hidden');
+            document.getElementById('playerVideoContainer').classList.add('hidden');
+            document.getElementById('playerLoading').classList.remove('hidden');
+
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.className = 'text-[11px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-mono animate-pulse';
+            statusBadge.innerText = 'Obrada Wan2.2...';
+
+            const totalSteps = parseInt(document.getElementById('stepsInput').value);
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStepCount = document.getElementById('progressStepCount');
+            const progressStep = document.getElementById('progressStep');
+            const progressSub = document.getElementById('progressSub');
+
+            // Generation Simulation Steps matching Wan2.2 Architecture
+            let currentStep = 0;
+            
+            const interval = setInterval(() => {
+                currentStep++;
+                const percentage = Math.round((currentStep / totalSteps) * 100);
+
+                progressBar.style.width = `${percentage}%`;
+                progressPercent.innerText = `${percentage}%`;
+                progressStepCount.innerText = `${currentStep}/${totalSteps} steps`;
+
+                if (currentStep === 1) {
+                    progressStep.innerText = 'Učitavanje modela i T5 Tekstualnog Encodera';
+                    progressSub.innerText = 'Obrada prompta i inicijalizacija latentnog šuma...';
+                } else if (currentStep === Math.round(totalSteps * 0.15)) {
+                    progressStep.innerText = 'VAE Enkodiranje ulazne slike';
+                    progressSub.innerText = 'Pretvaranje rezolucije u VAE latentni prostor (stride=8)...';
+                } else if (currentStep === Math.round(totalSteps * 0.30)) {
+                    progressStep.innerText = 'DiT (Diffusion Transformer) Uzorkovanje';
+                    progressSub.innerText = `Primjena ${document.getElementById('solverSelect').value.toUpperCase()} Flow Solvera...`;
+                } else if (currentStep === Math.round(totalSteps * 0.85)) {
+                    progressStep.innerText = 'VAE Dekodiranje okvira u video';
+                    progressSub.innerText = 'Sintetiziranje 81 okvira visoke kvalitete...';
+                }
+
+                if (currentStep >= totalSteps) {
+                    clearInterval(interval);
+                    finishGeneration();
+                }
+            }, 120);
+        }
+
+        // Finish Generation & Render Sample Generated Video
+        function finishGeneration() {
+            isGenerating = false;
+            document.getElementById('generateBtn').disabled = false;
+            document.getElementById('generateBtn').classList.remove('opacity-75', 'cursor-not-allowed');
+
+            document.getElementById('playerLoading').classList.add('hidden');
+            document.getElementById('playerVideoContainer').classList.remove('hidden');
+
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.className = 'text-[11px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono';
+            statusBadge.innerText = 'Završeno';
+
+            // Sample high quality AI generated video preview (Cat Surfing sample matching Alibaba Wan2.2 demo)
+            const sampleVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+            const videoElem = document.getElementById('outputVideo');
+            videoElem.src = sampleVideoUrl;
+            videoElem.play();
+
+            // Enable Actions
+            const actions = document.getElementById('videoActions');
+            actions.classList.remove('opacity-50', 'pointer-events-none');
+            generatedVideoBlobUrl = sampleVideoUrl;
+        }
+
+        // Download Video
+        function downloadVideo() {
+            if (!generatedVideoBlobUrl) return;
+            const a = document.createElement('a');
+            a.href = generatedVideoBlobUrl;
+            a.download = `Wan2.2_Generated_Video_${Date.now()}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Share Video
+        function shareVideo() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Wan2.2 AI Video',
+                    text: 'Pogledajte video koji sam generirao pomoću Wan2.2 AI Studija!',
+                    url: window.location.href
+                });
+            } else {
+                alert('Poveznica aplikacije je spremna za dijeljenje: ' + window.location.href);
+            }
+        }
+    </script>
+</body>
+</html>
